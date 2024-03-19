@@ -32,7 +32,7 @@ type Celeritas struct {
 	Routes   *chi.Mux
 	Render   *render.Render
 	Session  *scs.SessionManager
-	JetViews *jet.Set
+	DB       Database
 	config   config
 }
 
@@ -41,6 +41,7 @@ type config struct {
 	renderer    string
 	cookie      cookieConfig
 	sessionType string
+	database    databaseConfig
 }
 
 func New(rootPath string) (*Celeritas, error) {
@@ -57,6 +58,20 @@ func New(rootPath string) (*Celeritas, error) {
 	infoLog, errLog := c.startLoggers()
 	c.InfoLog = infoLog
 	c.ErrorLog = errLog
+
+	// connect to DB
+	if os.Getenv("DATABASE_TYPE") != "" {
+		db, err := c.OpenDB(os.Getenv("DATABASE_TYPE"), c.BuildDSN())
+		if err != nil {
+			c.ErrorLog.Println(err)
+			os.Exit(1)
+		}
+
+		c.DB = Database{
+			Type: os.Getenv("DATABASE_TYPE"),
+			Pool: db,
+		}
+	}
 	c.Debug, _ = strconv.ParseBool(os.Getenv("DEBUG"))
 	c.Version = version
 	c.RootPath = rootPath
@@ -72,6 +87,10 @@ func New(rootPath string) (*Celeritas, error) {
 			domain:   os.Getenv("COOKIE_DOMAIN"),
 		},
 		sessionType: os.Getenv("SESSION_TYPE"),
+		database: databaseConfig{
+			dsn:      c.BuildDSN(),
+			database: os.Getenv("DATABASE_TYPE"),
+		},
 	}
 
 	// create session
@@ -93,11 +112,9 @@ func New(rootPath string) (*Celeritas, error) {
 		jet.NewOSFileSystemLoader(fmt.Sprintf("%s/views", c.RootPath)),
 		jet.InDevelopmentMode(),
 	)
-	c.JetViews = views
+	c.createRenderer(views)
 
 	c.Routes = c.routes().(*chi.Mux)
-
-	c.createRenderer()
 
 	return c, nil
 }
@@ -111,6 +128,8 @@ func (c *Celeritas) ListenAndServe() {
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 600 * time.Second,
 	}
+
+	defer c.DB.Pool.Close()
 
 	c.InfoLog.Printf("Starting server on port %s", c.config.port)
 
@@ -146,14 +165,37 @@ func (c *Celeritas) startLoggers() (*log.Logger, *log.Logger) {
 	return infoLog, errorLog
 }
 
-func (c *Celeritas) createRenderer() {
+func (c *Celeritas) createRenderer(jetViews *jet.Set) {
 	var r render.Render
 	r.Renderer = c.config.renderer
 	r.RootPath = c.RootPath
 	r.Port, _ = strconv.Atoi(c.config.port)
 	r.Secure = false // todo: get it from config file of the app
 	r.ServerName = c.AppName
-	r.JetViews = c.JetViews
+	r.JetViews = jetViews
 
 	c.Render = &r
+}
+
+func (c *Celeritas) BuildDSN() string {
+	var dsn string
+
+	switch os.Getenv("DATABASE_TYPE") {
+	case "postgres", "postgresql":
+		dsn = fmt.Sprintf("host=%s port=%s user=%s dbname=%s sslmode=%s timezone=UTC connect_timeout=5",
+			os.Getenv("DATABASE_HOST"),
+			os.Getenv("DATABASE_PORT"),
+			os.Getenv("DATABASE_USER"),
+			os.Getenv("DATABASE_NAME"),
+			os.Getenv("DATABASE_SSL_MODE"),
+		)
+
+		if os.Getenv("DATABASE_PASS") != "" {
+			dsn = fmt.Sprintf("%s password=%s", dsn, os.Getenv("DATABASE_PASS"))
+		}
+	default:
+		c.ErrorLog.Println("could not create DB  DSN")
+	}
+
+	return dsn
 }
