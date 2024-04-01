@@ -59,9 +59,14 @@ func New(rootPath string) (*Celeritas, error) {
 	c.InfoLog = infoLog
 	c.ErrorLog = errLog
 
+	dbConfig := databaseConfig{
+		dsn:      c.BuildDSN(),
+		database: os.Getenv("DATABASE_TYPE"),
+	}
+
 	// connect to DB
-	if os.Getenv("DATABASE_TYPE") != "" {
-		db, err := c.OpenDB(os.Getenv("DATABASE_TYPE"), c.BuildDSN())
+	if dbConfig.database != "" {
+		db, err := c.OpenDB(dbConfig.database, dbConfig.dsn)
 		if err != nil {
 			c.ErrorLog.Println(err)
 			os.Exit(1)
@@ -87,10 +92,7 @@ func New(rootPath string) (*Celeritas, error) {
 			domain:   os.Getenv("COOKIE_DOMAIN"),
 		},
 		sessionType: os.Getenv("SESSION_TYPE"),
-		database: databaseConfig{
-			dsn:      c.BuildDSN(),
-			database: os.Getenv("DATABASE_TYPE"),
-		},
+		database:    dbConfig,
 	}
 
 	// create session
@@ -104,8 +106,6 @@ func New(rootPath string) (*Celeritas, error) {
 	}
 
 	sss := sess.InitSession()
-	c.InfoLog.Println("sss : ", sss)
-
 	c.Session = sss
 
 	var views = jet.NewSet(
@@ -173,6 +173,7 @@ func (c *Celeritas) createRenderer(jetViews *jet.Set) {
 	r.Secure = false // todo: get it from config file of the app
 	r.ServerName = c.AppName
 	r.JetViews = jetViews
+	r.Session = c.Session
 
 	c.Render = &r
 }
