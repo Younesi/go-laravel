@@ -15,14 +15,26 @@ const version = "1.0.0"
 
 func main() {
 	arg1, arg2, arg3, err := validateInput()
+
 	if err != nil {
 		exitGracefully(err)
 	}
 
+	setup()
+
 	switch arg1 {
-	case "help" :
+	case "make":
+		if arg2 == "" {
+			exitGracefully(errors.New("makes requies a subcommand: (migrations|model|handler)"))
+		}
+
+		err = doMake(arg2, arg3)
+		if err != nil {
+			exitGracefully(err)
+		}
+	case "help":
 		showHelp()
-	case "version" :
+	case "version":
 		color.Yellow("Application version:" + version)
 	default:
 		log.Println(arg2, arg3)
@@ -35,13 +47,12 @@ func validateInput() (string, string, string, error) {
 	if len(os.Args) > 1 {
 		arg1 = os.Args[1]
 
-		if len(os.Args) > 3 {
+		if len(os.Args) >= 3 {
 			arg2 = os.Args[2]
 		}
-	}
-
-	if len(os.Args) > 4 {
-		arg3 = os.Args[3]
+		if len(os.Args) >= 4 {
+			arg3 = os.Args[3]
+		}
 	} else {
 		color.Red("Error: command required")
 		showHelp()
@@ -53,6 +64,7 @@ func validateInput() (string, string, string, error) {
 
 func showHelp() {
 	color.Yellow(`Available commands :
+		make		- create a migration | model | handler
 		help		- show the help command
 		version		- print application version
 	`)
