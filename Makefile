@@ -1,12 +1,15 @@
-## test: runs all tests
+## runs all tests
 test:
 	@go test -v ./...
 
-## cover: opens coverage in browser
+## opens coverage in browser
 cover:
 	@go test -coverprofile=coverage.out ./... && go tool cover -html=coverage.out
 
-## coverage: displays test coverage
+## displays test coverage
 coverage:
 	@go test -cover ./...
 
+## build command line tool atlas and copies it to my app
+build_cli:
+	@go build -o ../myApp/atlas ./cmd/cli
