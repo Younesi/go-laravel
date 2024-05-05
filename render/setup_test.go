@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/younesi/celeritas/render"
+	"github.com/younesi/atlas/render"
 
 	"github.com/CloudyKit/jet/v6"
 )

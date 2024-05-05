@@ -1,4 +1,4 @@
-package celeritas
+package atlas
 
 import (
 	"fmt"
@@ -8,12 +8,12 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/younesi/celeritas/session"
+	"github.com/younesi/atlas/session"
 
 	"github.com/CloudyKit/jet/v6"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/younesi/celeritas/render"
+	"github.com/younesi/atlas/render"
 
 	"github.com/joho/godotenv"
 
@@ -22,7 +22,7 @@ import (
 
 const version = "1.0.0"
 
-type Celeritas struct {
+type Atlas struct {
 	AppName  string
 	Debug    bool
 	Version  string
@@ -44,44 +44,44 @@ type config struct {
 	database    databaseConfig
 }
 
-func New(rootPath string) (*Celeritas, error) {
+func New(rootPath string) (*Atlas, error) {
 	pathConfig := initPath{
 		rootPath:    rootPath,
 		folderNames: []string{"handlers", "migrations", "views", "public", "logs", "tmp", "data", "middleware"},
 	}
 
-	c := &Celeritas{}
-	err := c.init(pathConfig)
+	a := &Atlas{}
+	err := a.init(pathConfig)
 	if err != nil {
 		return nil, err
 	}
-	infoLog, errLog := c.startLoggers()
-	c.InfoLog = infoLog
-	c.ErrorLog = errLog
+	infoLog, errLog := a.startLoggers()
+	a.InfoLog = infoLog
+	a.ErrorLog = errLog
 
 	dbConfig := databaseConfig{
-		dsn:      c.BuildDSN(),
+		dsn:      a.BuildDSN(),
 		database: os.Getenv("DATABASE_TYPE"),
 	}
 
 	// connect to DB
 	if dbConfig.database != "" {
-		db, err := c.OpenDB(dbConfig.database, dbConfig.dsn)
+		db, err := a.OpenDB(dbConfig.database, dbConfig.dsn)
 		if err != nil {
-			c.ErrorLog.Println(err)
+			a.ErrorLog.Println(err)
 			os.Exit(1)
 		}
 
-		c.DB = Database{
+		a.DB = Database{
 			Type: os.Getenv("DATABASE_TYPE"),
 			Pool: db,
 		}
 	}
-	c.Debug, _ = strconv.ParseBool(os.Getenv("DEBUG"))
-	c.Version = version
-	c.RootPath = rootPath
+	a.Debug, _ = strconv.ParseBool(os.Getenv("DEBUG"))
+	a.Version = version
+	a.RootPath = rootPath
 
-	c.config = config{
+	a.config = config{
 		port:     os.Getenv("PORT"),
 		renderer: os.Getenv("RENDERER"), // get it from config file of the app
 		cookie: cookieConfig{
@@ -97,51 +97,51 @@ func New(rootPath string) (*Celeritas, error) {
 
 	// create session
 	sess := session.Session{
-		CookieLifetime: c.config.cookie.lifetime,
-		CookiePersist:  c.config.cookie.persist,
-		CookieName:     c.config.cookie.name,
-		CookieSecure:   c.config.cookie.secure,
-		CookieDomain:   c.config.cookie.domain,
-		SessionType:    c.config.sessionType,
+		CookieLifetime: a.config.cookie.lifetime,
+		CookiePersist:  a.config.cookie.persist,
+		CookieName:     a.config.cookie.name,
+		CookieSecure:   a.config.cookie.secure,
+		CookieDomain:   a.config.cookie.domain,
+		SessionType:    a.config.sessionType,
 	}
 
 	sss := sess.InitSession()
-	c.Session = sss
+	a.Session = sss
 
 	var views = jet.NewSet(
-		jet.NewOSFileSystemLoader(fmt.Sprintf("%s/views", c.RootPath)),
+		jet.NewOSFileSystemLoader(fmt.Sprintf("%s/views", a.RootPath)),
 		jet.InDevelopmentMode(),
 	)
-	c.createRenderer(views)
+	a.createRenderer(views)
 
-	c.Routes = c.routes().(*chi.Mux)
+	a.Routes = a.routes().(*chi.Mux)
 
-	return c, nil
+	return a, nil
 }
 
-func (c *Celeritas) ListenAndServe() {
+func (a *Atlas) ListenAndServe() {
 	server := &http.Server{
-		Addr:         fmt.Sprintf(":%s", c.config.port),
-		ErrorLog:     c.ErrorLog,
-		Handler:      c.Routes,
+		Addr:         fmt.Sprintf(":%s", a.config.port),
+		ErrorLog:     a.ErrorLog,
+		Handler:      a.Routes,
 		IdleTimeout:  30 * time.Second,
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 600 * time.Second,
 	}
 
-	defer c.DB.Pool.Close()
+	defer a.DB.Pool.Close()
 
-	c.InfoLog.Printf("Starting server on port %s", c.config.port)
+	a.InfoLog.Printf("Starting server on port %s", a.config.port)
 
 	err := server.ListenAndServe()
-	c.ErrorLog.Fatal(err)
+	a.ErrorLog.Fatal(err)
 }
 
-func (c *Celeritas) init(p initPath) error {
+func (a *Atlas) init(p initPath) error {
 	root := p.rootPath
 
 	for _, folder := range p.folderNames {
-		err := c.CreateDirIfNotExist(root + "/" + folder)
+		err := a.CreateDirIfNotExist(root + "/" + folder)
 		if err != nil {
 			return err
 		}
@@ -155,7 +155,7 @@ func (c *Celeritas) init(p initPath) error {
 	return nil
 }
 
-func (c *Celeritas) startLoggers() (*log.Logger, *log.Logger) {
+func (a *Atlas) startLoggers() (*log.Logger, *log.Logger) {
 	var infoLog *log.Logger
 	var errorLog *log.Logger
 
@@ -165,20 +165,20 @@ func (c *Celeritas) startLoggers() (*log.Logger, *log.Logger) {
 	return infoLog, errorLog
 }
 
-func (c *Celeritas) createRenderer(jetViews *jet.Set) {
+func (a *Atlas) createRenderer(jetViews *jet.Set) {
 	var r render.Render
-	r.Renderer = c.config.renderer
-	r.RootPath = c.RootPath
-	r.Port, _ = strconv.Atoi(c.config.port)
+	r.Renderer = a.config.renderer
+	r.RootPath = a.RootPath
+	r.Port, _ = strconv.Atoi(a.config.port)
 	r.Secure = false // todo: get it from config file of the app
-	r.ServerName = c.AppName
+	r.ServerName = a.AppName
 	r.JetViews = jetViews
-	r.Session = c.Session
+	r.Session = a.Session
 
-	c.Render = &r
+	a.Render = &r
 }
 
-func (c *Celeritas) BuildDSN() string {
+func (a *Atlas) BuildDSN() string {
 	var dsn string
 
 	switch os.Getenv("DATABASE_TYPE") {
@@ -195,7 +195,7 @@ func (c *Celeritas) BuildDSN() string {
 			dsn = fmt.Sprintf("%s password=%s", dsn, os.Getenv("DATABASE_PASS"))
 		}
 	default:
-		c.ErrorLog.Println("could not create DB  DSN")
+		a.ErrorLog.Println("could not create DB  DSN")
 	}
 
 	return dsn

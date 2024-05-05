@@ -1,4 +1,4 @@
-package celeritas
+package atlas
 
 import "database/sql"
 

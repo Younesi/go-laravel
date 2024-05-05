@@ -33,30 +33,30 @@ type TemplateData struct {
 	Secure          bool
 }
 
-func (c *Render) LoadDefaultData(td *TemplateData, r *http.Request) *TemplateData {
-	td.Secure = c.Secure
+func (r *Render) LoadDefaultData(td *TemplateData, req *http.Request) *TemplateData {
+	td.Secure = r.Secure
 
-	if c.Session.Exists(r.Context(), "UserId") {
+	if r.Session.Exists(req.Context(), "UserId") {
 		td.IsAuthenticated = true
 	}
 
 	return td
 }
 
-func (c *Render) Page(w http.ResponseWriter, r *http.Request, view string, variables, data interface{}) error {
-	switch strings.ToLower(c.Renderer) {
+func (r *Render) Page(w http.ResponseWriter, req *http.Request, view string, variables, data interface{}) error {
+	switch strings.ToLower(r.Renderer) {
 	case "go":
-		return c.GoPage(w, r, view, data)
+		return r.GoPage(w, req, view, data)
 	case "jet":
-		return c.JetPage(w, r, view, variables, data)
+		return r.JetPage(w, req, view, variables, data)
 	}
 
 	return errors.New("renderer not supported")
 }
 
 // GoPage renders a template using the standard Go html/template package
-func (c *Render) GoPage(w http.ResponseWriter, r *http.Request, view string, data interface{}) error {
-	tmpl, err := template.ParseFiles(fmt.Sprintf("%s/views/%s.page.tmpl", c.RootPath, view))
+func (r *Render) GoPage(w http.ResponseWriter, req *http.Request, view string, data interface{}) error {
+	tmpl, err := template.ParseFiles(fmt.Sprintf("%s/views/%s.page.tmpl", r.RootPath, view))
 	if err != nil {
 		return err
 	}
@@ -75,7 +75,7 @@ func (c *Render) GoPage(w http.ResponseWriter, r *http.Request, view string, dat
 }
 
 // JetPage renders a template using the Jet templating engine
-func (c *Render) JetPage(w http.ResponseWriter, r *http.Request, view string, variables, data interface{}) error {
+func (r *Render) JetPage(w http.ResponseWriter, req *http.Request, view string, variables, data interface{}) error {
 	var vars = make(jet.VarMap)
 	if variables != nil {
 		vars = variables.(jet.VarMap)
@@ -84,9 +84,9 @@ func (c *Render) JetPage(w http.ResponseWriter, r *http.Request, view string, va
 	if data != nil {
 		td = data.(*TemplateData)
 	}
-	td = c.LoadDefaultData(td, r)
+	td = r.LoadDefaultData(td, req)
 
-	t, err := c.JetViews.GetTemplate(fmt.Sprintf("%s.jet", view))
+	t, err := r.JetViews.GetTemplate(fmt.Sprintf("%s.jet", view))
 	if err != nil {
 		log.Println("Error getting template : ", err)
 		return err

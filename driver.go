@@ -1,4 +1,4 @@
-package celeritas
+package atlas
 
 import (
 	"database/sql"
@@ -8,7 +8,7 @@ import (
 	_ "github.com/jackc/pgx/v4/stdlib"
 )
 
-func (c *Celeritas) OpenDB(dbType, dsn string) (*sql.DB, error) {
+func (a *Atlas) OpenDB(dbType, dsn string) (*sql.DB, error) {
 	if dbType == "postgres" || dbType == "postgresql" {
 		dbType = "pgx"
 	}
@@ -23,6 +23,6 @@ func (c *Celeritas) OpenDB(dbType, dsn string) (*sql.DB, error) {
 		return nil, err
 	}
 
-	c.InfoLog.Println("connected to DB : ", dbType)
+	a.InfoLog.Println("connected to DB : ", dbType)
 	return db, nil
 }

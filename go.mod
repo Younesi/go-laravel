@@ -1,4 +1,4 @@
-module github.com/younesi/celeritas
+module github.com/younesi/atlas
 
 go 1.21.6
 

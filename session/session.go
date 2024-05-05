@@ -18,23 +18,23 @@ type Session struct {
 	CookieSecure   string
 }
 
-func (c *Session) InitSession() *scs.SessionManager {
+func (s *Session) InitSession() *scs.SessionManager {
 
 	var persist, secure bool
 
 	// how long should sessions last?
-	minutes, err := strconv.Atoi(c.CookieLifetime)
+	minutes, err := strconv.Atoi(s.CookieLifetime)
 	if err != nil {
 		minutes = 60
 	}
 
 	// should cookies persist?
-	if strings.ToLower(c.CookiePersist) == "true" {
+	if strings.ToLower(s.CookiePersist) == "true" {
 		persist = true
 	}
 
 	// must cookies be secure?
-	if strings.ToLower(c.CookieSecure) == "true" {
+	if strings.ToLower(s.CookieSecure) == "true" {
 		secure = true
 	}
 
@@ -42,13 +42,13 @@ func (c *Session) InitSession() *scs.SessionManager {
 	session := scs.New()
 	session.Lifetime = time.Duration(minutes) * time.Minute
 	session.Cookie.Persist = persist
-	session.Cookie.Name = c.CookieName
+	session.Cookie.Name = s.CookieName
 	session.Cookie.Secure = secure
-	session.Cookie.Domain = c.CookieDomain
+	session.Cookie.Domain = s.CookieDomain
 	session.Cookie.SameSite = http.SameSiteLaxMode
 
 	// which session store?
-	switch strings.ToLower(c.SessionType) {
+	switch strings.ToLower(s.SessionType) {
 	case "redis":
 
 	case "mysql", "mariadb":

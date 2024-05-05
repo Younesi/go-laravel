@@ -6,7 +6,7 @@ import (
 
 	"github.com/alexedwards/scs/v2"
 
-	sessionPackage "github.com/younesi/celeritas/session"
+	sessionPackage "github.com/younesi/atlas/session"
 )
 
 func TestSession_InitSession(t *testing.T) {
