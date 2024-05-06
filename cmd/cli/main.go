@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"log"
 	"os"
 
 	"github.com/fatih/color"
@@ -14,6 +13,7 @@ var at atlas.Atlas
 const version = "1.0.0"
 
 func main() {
+	var message string
 	arg1, arg2, arg3, err := validateInput()
 
 	if err != nil {
@@ -32,13 +32,24 @@ func main() {
 		if err != nil {
 			exitGracefully(err)
 		}
+	case "migrate":
+		if arg2 == "" {
+			arg2 = "up"
+		}
+		err := doMigrate(arg2, arg3)
+		if err != nil {
+			exitGracefully(err)
+		}
+		message = "Migrations complete!"
 	case "help":
 		showHelp()
 	case "version":
 		color.Yellow("Application version:" + version)
 	default:
-		log.Println(arg2, arg3)
+		showHelp()
 	}
+
+	exitGracefully(nil, message)
 }
 
 func validateInput() (string, string, string, error) {
@@ -60,14 +71,6 @@ func validateInput() (string, string, string, error) {
 	}
 
 	return arg1, arg2, arg3, nil
-}
-
-func showHelp() {
-	color.Yellow(`Available commands :
-		make		- create a migration | model | handler
-		help		- show the help command
-		version		- print application version
-	`)
 }
 
 func exitGracefully(err error, msg ...string) {

@@ -28,7 +28,7 @@ func doMake(arg2, arg3 string) error {
 			exitGracefully(err)
 		}
 	default:
-		errors.New("unsupported make arguments")
+		exitGracefully(errors.New("unsupported make arguments"))
 	}
 	return nil
 }
