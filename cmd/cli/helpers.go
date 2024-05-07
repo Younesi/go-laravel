@@ -27,6 +27,7 @@ func showHelp() {
 		migrate				- runs all ready-to-run migrations
 		migrate	down		- rollbacks the last migration
 		migrate	reset		- rollbacks all the migrations
+		auth				- create authentication skeletion
 		help				- show the help command
 		version				- print application version
 	`)

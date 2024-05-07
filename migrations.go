@@ -1,6 +1,8 @@
 package atlas
 
 import (
+	"log"
+
 	"github.com/golang-migrate/migrate/v4"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -17,7 +19,7 @@ func (a *Atlas) MigrateUp(dsn string) error {
 	defer m.Close()
 
 	if err := m.Up(); err != nil {
-		a.InfoLog.Println("Error running migration: ", err)
+		log.Println("Error running migration: ", err)
 		return err
 	}
 
@@ -32,7 +34,7 @@ func (a *Atlas) MigrateDownAll(dsn string) error {
 	defer m.Close()
 
 	if err = m.Down(); err != nil {
-		a.InfoLog.Println("Error rolling migrations back: ", err)
+		log.Println("Error rolling migrations back: ", err)
 		return err
 	}
 
@@ -47,7 +49,7 @@ func (a *Atlas) Steps(n int, dsn string) error {
 	defer m.Close()
 
 	if err = m.Steps(n); err != nil {
-		a.InfoLog.Println("Error running migrations steps: ", err)
+		log.Println("Error running migrations steps: ", err)
 		return err
 	}
 
@@ -62,7 +64,7 @@ func (a *Atlas) MigrateForce(dsn string) error {
 	defer m.Close()
 
 	if err = m.Force(-1); err != nil {
-		a.InfoLog.Println("Error running migrations force: ", err)
+		log.Println("Error running migrations force: ", err)
 		return err
 	}
 
