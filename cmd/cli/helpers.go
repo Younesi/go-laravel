@@ -23,13 +23,13 @@ func setup() {
 
 func showHelp() {
 	color.Yellow(`Available commands :
-		migration <name>	- create a migration file with the specified name
-		migrate				- runs all ready-to-run migrations
-		migrate	down		- rollbacks the last migration
-		migrate	reset		- rollbacks all the migrations
-		auth				- create authentication skeletion
-		help				- show the help command
-		version				- print application version
+		migration <name>		- create a migration file with the specified name
+		migrate					- runs all ready-to-run migrations
+		migrate	down			- rollbacks the last migration
+		migrate	reset			- rollbacks all the migrations
+		auth					- create authentication skeletion
+		help					- show the help command
+		version					- print application version
 	`)
 }
 
