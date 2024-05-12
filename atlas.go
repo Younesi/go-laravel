@@ -103,6 +103,7 @@ func New(rootPath string) (*Atlas, error) {
 		CookieSecure:   a.config.cookie.secure,
 		CookieDomain:   a.config.cookie.domain,
 		SessionType:    a.config.sessionType,
+		DBPool:         a.DB.Pool,
 	}
 
 	sss := sess.InitSession()
