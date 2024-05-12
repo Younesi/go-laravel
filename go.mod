@@ -14,6 +14,7 @@ require (
 
 require (
 	github.com/CloudyKit/fastprinter v0.0.0-20200109182630-33d98a066a53 // indirect
+	github.com/ettle/strcase v0.2.0 // indirect
 	github.com/fatih/color v1.16.0 // indirect
 	github.com/go-sql-driver/mysql v1.5.0 // indirect
 	github.com/golang-migrate/migrate/v4 v4.17.1 // indirect

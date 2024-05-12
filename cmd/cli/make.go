@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -29,6 +30,20 @@ func doMake(arg2, arg3 string) error {
 		}
 	case "auth":
 		err := doAuth()
+		if err != nil {
+			exitGracefully(err)
+		}
+	case "handler":
+		if arg3 == "" {
+			exitGracefully(errors.New("you must give the handler a name"))
+		}
+
+		fileName := at.RootPath + "/handlers/" + strings.ToLower(arg3) + ".go"
+		if fileExists(fileName) {
+			exitGracefully(errors.New(fileName + "already exists!"))
+		}
+
+		err := copyFileContentFromTemplate("templates/handler.go.txt", fileName, arg3)
 		if err != nil {
 			exitGracefully(err)
 		}
