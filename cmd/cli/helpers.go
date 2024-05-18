@@ -23,12 +23,13 @@ func setup() {
 
 func showHelp() {
 	color.Yellow(`Available commands :
-		migration <name>			- create a migration file with the specified name
+		make migration <name>		- create a migration file with the specified name
+		make handler <name>			- create a stub handler file in handlers
+		make auth					- create authentication skeletion
+		mak key						- create an application encryption key
 		migrate						- runs all ready-to-run migrations
 		migrate	down				- rollbacks the last migration
 		migrate	reset				- rollbacks all the migrations
-		make auth					- create authentication skeletion
-		make handler <name>			- create a stub handler file in handlers
 		help						- show the help command
 		version						- print application version
 	`)

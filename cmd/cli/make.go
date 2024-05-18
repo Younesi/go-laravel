@@ -3,12 +3,18 @@ package main
 import (
 	"errors"
 	"fmt"
+
 	"strings"
 	"time"
+
+	"github.com/fatih/color"
 )
 
 func doMake(arg2, arg3 string) error {
 	switch arg2 {
+	case "key":
+		rnd := at.RandomString(32)
+		color.Yellow("32 character encryption key: %s", rnd)
 	case "migration":
 		dbType := at.DB.Type
 		if arg3 == "" {

@@ -23,17 +23,18 @@ import (
 const version = "1.0.0"
 
 type Atlas struct {
-	AppName  string
-	Debug    bool
-	Version  string
-	ErrorLog *log.Logger
-	InfoLog  *log.Logger
-	RootPath string
-	Routes   *chi.Mux
-	Render   *render.Render
-	Session  *scs.SessionManager
-	DB       Database
-	config   config
+	AppName       string
+	Debug         bool
+	Version       string
+	ErrorLog      *log.Logger
+	InfoLog       *log.Logger
+	RootPath      string
+	Routes        *chi.Mux
+	Render        *render.Render
+	Session       *scs.SessionManager
+	DB            Database
+	EncryptionKey string
+	config        config
 }
 
 type config struct {
@@ -108,6 +109,7 @@ func New(rootPath string) (*Atlas, error) {
 
 	sss := sess.InitSession()
 	a.Session = sss
+	a.EncryptionKey = os.Getenv("KEY")
 
 	var views = jet.NewSet(
 		jet.NewOSFileSystemLoader(fmt.Sprintf("%s/views", a.RootPath)),
