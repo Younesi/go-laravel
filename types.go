@@ -24,3 +24,9 @@ type databaseConfig struct {
 	dsn      string
 	database string
 }
+
+type redisConfig struct {
+	host     string
+	password string
+	prefix   string
+}

@@ -6,8 +6,11 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
+	"github.com/gomodule/redigo/redis"
+	"github.com/younesi/atlas/cache"
 	"github.com/younesi/atlas/session"
 
 	"github.com/CloudyKit/jet/v6"
@@ -34,6 +37,7 @@ type Atlas struct {
 	Session       *scs.SessionManager
 	DB            Database
 	EncryptionKey string
+	Cache         cache.Cache
 	config        config
 }
 
@@ -43,6 +47,7 @@ type config struct {
 	cookie      cookieConfig
 	sessionType string
 	database    databaseConfig
+	redis       redisConfig
 }
 
 func New(rootPath string) (*Atlas, error) {
@@ -64,7 +69,6 @@ func New(rootPath string) (*Atlas, error) {
 		dsn:      a.BuildDSN(),
 		database: os.Getenv("DATABASE_TYPE"),
 	}
-
 	// connect to DB
 	if dbConfig.database != "" {
 		db, err := a.OpenDB(dbConfig.database, dbConfig.dsn)
@@ -78,9 +82,16 @@ func New(rootPath string) (*Atlas, error) {
 			Pool: db,
 		}
 	}
+
 	a.Debug, _ = strconv.ParseBool(os.Getenv("DEBUG"))
 	a.Version = version
 	a.RootPath = rootPath
+
+	redisConfig := redisConfig{
+		host:     os.Getenv("REDIS_HOST"),
+		password: os.Getenv("REDIS_PASSWORD"),
+		prefix:   os.Getenv("REDIS_PREFIX"),
+	}
 
 	a.config = config{
 		port:     os.Getenv("PORT"),
@@ -94,6 +105,7 @@ func New(rootPath string) (*Atlas, error) {
 		},
 		sessionType: os.Getenv("SESSION_TYPE"),
 		database:    dbConfig,
+		redis:       redisConfig,
 	}
 
 	// create session
@@ -110,6 +122,12 @@ func New(rootPath string) (*Atlas, error) {
 	sss := sess.InitSession()
 	a.Session = sss
 	a.EncryptionKey = os.Getenv("KEY")
+
+	if os.Getenv("CACHE") == strings.ToLower("redis") {
+
+		myRedisCache := a.createRedisCacheClient()
+		a.Cache = myRedisCache
+	}
 
 	var views = jet.NewSet(
 		jet.NewOSFileSystemLoader(fmt.Sprintf("%s/views", a.RootPath)),
@@ -202,4 +220,24 @@ func (a *Atlas) BuildDSN() string {
 	}
 
 	return dsn
+}
+
+func (a *Atlas) createRedisCacheClient() *cache.RedisCache {
+	return &cache.RedisCache{
+		Conn:   a.createRedisPool(),
+		Prefix: a.config.redis.prefix,
+	}
+}
+
+func (a *Atlas) createRedisPool() *redis.Pool {
+	return &redis.Pool{
+		MaxIdle:     50,
+		MaxActive:   100,
+		IdleTimeout: 240 * time.Second,
+		Dial: func() (redis.Conn, error) {
+			return redis.Dial("tcp",
+				a.config.redis.host,
+				redis.DialPassword(a.config.redis.password))
+		},
+	}
 }
