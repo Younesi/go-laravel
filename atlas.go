@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"os"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/gomodule/redigo/redis"
@@ -24,6 +23,8 @@ import (
 )
 
 const version = "1.0.0"
+
+var myRedisCache *cache.RedisCache
 
 type Atlas struct {
 	AppName       string
@@ -64,6 +65,11 @@ func New(rootPath string) (*Atlas, error) {
 	infoLog, errLog := a.startLoggers()
 	a.InfoLog = infoLog
 	a.ErrorLog = errLog
+
+	if os.Getenv("CACHE") == "redis" {
+		myRedisCache = a.createRedisCacheClient()
+		a.Cache = myRedisCache
+	}
 
 	dbConfig := databaseConfig{
 		dsn:      a.BuildDSN(),
@@ -116,18 +122,21 @@ func New(rootPath string) (*Atlas, error) {
 		CookieSecure:   a.config.cookie.secure,
 		CookieDomain:   a.config.cookie.domain,
 		SessionType:    a.config.sessionType,
-		DBPool:         a.DB.Pool,
 	}
 
-	sss := sess.InitSession()
-	a.Session = sss
+	if os.Getenv("SESSION_TYPE") == "redis" {
+		myRedisCache = a.createRedisCacheClient()
+	}
+
+	switch a.config.sessionType {
+	case "redis":
+		sess.RedisPool = myRedisCache.Conn
+	case "mysql", "postgres", "mariadb":
+		sess.DBPool = a.DB.Pool
+	}
+
+	a.Session = sess.InitSession()
 	a.EncryptionKey = os.Getenv("KEY")
-
-	if os.Getenv("CACHE") == strings.ToLower("redis") {
-
-		myRedisCache := a.createRedisCacheClient()
-		a.Cache = myRedisCache
-	}
 
 	var views = jet.NewSet(
 		jet.NewOSFileSystemLoader(fmt.Sprintf("%s/views", a.RootPath)),
