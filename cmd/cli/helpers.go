@@ -26,6 +26,7 @@ func showHelp() {
 		make migration <name>		- create a migration file with the specified name
 		make handler <name>			- create a stub handler file in handlers
 		make auth					- create authentication skeletion
+		make session				- create session migration
 		mak key						- create an application encryption key
 		migrate						- runs all ready-to-run migrations
 		migrate	down				- rollbacks the last migration
