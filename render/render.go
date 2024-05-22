@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/alexedwards/scs/v2"
+	"github.com/justinas/nosurf"
 
 	"github.com/CloudyKit/jet/v6"
 )
@@ -35,6 +36,7 @@ type TemplateData struct {
 
 func (r *Render) LoadDefaultData(td *TemplateData, req *http.Request) *TemplateData {
 	td.Secure = r.Secure
+	td.CSRFToken = nosurf.Token(req)
 
 	if r.Session.Exists(req.Context(), "UserId") {
 		td.IsAuthenticated = true

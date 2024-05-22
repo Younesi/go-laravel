@@ -1,8 +1,6 @@
 package atlas
 
 import (
-	"fmt"
-
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 
@@ -20,10 +18,7 @@ func (a *Atlas) routes() http.Handler {
 	mux.Use(middleware.Recoverer)
 
 	mux.Use(a.SessionLoad)
-
-	mux.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "Welcome to %s", a.AppName)
-	})
+	mux.Use(a.NoCSRF)
 
 	return mux
 }
