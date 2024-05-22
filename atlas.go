@@ -138,10 +138,19 @@ func New(rootPath string) (*Atlas, error) {
 	a.Session = sess.InitSession()
 	a.EncryptionKey = os.Getenv("KEY")
 
-	var views = jet.NewSet(
-		jet.NewOSFileSystemLoader(fmt.Sprintf("%s/views", a.RootPath)),
-		jet.InDevelopmentMode(),
-	)
+	var views *jet.Set
+	if a.Debug {
+		views = jet.NewSet(
+			jet.NewOSFileSystemLoader(fmt.Sprintf("%s/views", a.RootPath)),
+			jet.InDevelopmentMode(), // enable when debugging mode is on
+		)
+
+	} else {
+		views = jet.NewSet(
+			jet.NewOSFileSystemLoader(fmt.Sprintf("%s/views", a.RootPath)),
+		)
+	}
+
 	a.createRenderer(views)
 
 	a.Routes = a.routes().(*chi.Mux)
