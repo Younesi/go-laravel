@@ -24,7 +24,7 @@ import (
 
 const version = "1.0.0"
 
-var myRedisCache *cache.RedisCache
+var redisCache *cache.RedisCache
 
 type Atlas struct {
 	AppName       string
@@ -67,8 +67,8 @@ func New(rootPath string) (*Atlas, error) {
 	a.ErrorLog = errLog
 
 	if os.Getenv("CACHE") == "redis" {
-		myRedisCache = a.createRedisCacheClient()
-		a.Cache = myRedisCache
+		redisCache = a.createRedisCacheClient()
+		a.Cache = redisCache
 	}
 
 	dbConfig := databaseConfig{
@@ -125,12 +125,12 @@ func New(rootPath string) (*Atlas, error) {
 	}
 
 	if os.Getenv("SESSION_TYPE") == "redis" {
-		myRedisCache = a.createRedisCacheClient()
+		redisCache = a.createRedisCacheClient()
 	}
 
 	switch a.config.sessionType {
 	case "redis":
-		sess.RedisPool = myRedisCache.Conn
+		sess.RedisPool = redisCache.Conn
 	case "mysql", "postgres", "mariadb":
 		sess.DBPool = a.DB.Pool
 	}
