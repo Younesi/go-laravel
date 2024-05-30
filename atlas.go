@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gomodule/redigo/redis"
@@ -42,6 +43,14 @@ type Atlas struct {
 	EncryptionKey string
 	Cache         cache.Cache
 	config        config
+	Server        Server
+}
+
+type Server struct {
+	Name   string
+	Port   string
+	Secure bool
+	Url    string
 }
 
 type config struct {
@@ -116,6 +125,16 @@ func New(rootPath string) (*Atlas, error) {
 		database:    dbConfig,
 		redis:       redisConfig,
 	}
+
+	secure := false
+	if strings.ToLower(os.Getenv("SECURE")) == "true" {
+		secure = true
+	}
+
+	a.Server.Name = a.AppName
+	a.Server.Secure = secure
+	a.Server.Port = a.config.port
+	a.Server.Url = fmt.Sprintf("%s:%s", os.Getenv("APP_URL"), a.config.port)
 
 	// create session
 	sess := session.Session{

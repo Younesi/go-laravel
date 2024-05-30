@@ -32,6 +32,8 @@ type TemplateData struct {
 	Data            map[string]interface{}
 	CSRFToken       string
 	Secure          bool
+	Error           string
+	Flash           string
 }
 
 func (r *Render) LoadDefaultData(td *TemplateData, req *http.Request) *TemplateData {
