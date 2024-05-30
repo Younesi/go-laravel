@@ -26,6 +26,8 @@ const version = "1.0.0"
 
 var redisCache *cache.RedisCache
 
+var redisPool *redis.Pool
+
 type Atlas struct {
 	AppName       string
 	Debug         bool
@@ -69,6 +71,7 @@ func New(rootPath string) (*Atlas, error) {
 	if os.Getenv("CACHE") == "redis" {
 		redisCache = a.createRedisCacheClient()
 		a.Cache = redisCache
+		redisPool = redisCache.Conn
 	}
 
 	dbConfig := databaseConfig{
@@ -168,7 +171,12 @@ func (a *Atlas) ListenAndServe() {
 		WriteTimeout: 600 * time.Second,
 	}
 
-	defer a.DB.Pool.Close()
+	if a.DB.Pool != nil {
+		defer a.DB.Pool.Close()
+	}
+	if redisPool != nil {
+		defer redisPool.Close()
+	}
 
 	a.InfoLog.Printf("Starting server on port %s", a.config.port)
 

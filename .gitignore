@@ -20,3 +20,5 @@ output
 helm/platform-component/values.yaml
 .taskfile/LocalTasks.yml
 /coverage.out
+/cache/testdata
+/tmp
