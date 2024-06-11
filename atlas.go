@@ -3,6 +3,7 @@ package atlas
 import (
 	"fmt"
 	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"strconv"
@@ -23,7 +24,7 @@ import (
 	"github.com/alexedwards/scs/v2"
 )
 
-const version = "1.0.0"
+const version = "0.0.1"
 
 var redisCache *cache.RedisCache
 
@@ -33,8 +34,8 @@ type Atlas struct {
 	AppName       string
 	Debug         bool
 	Version       string
-	ErrorLog      *log.Logger
-	InfoLog       *log.Logger
+	ErrorLog      *slog.Logger
+	InfoLog       *slog.Logger
 	RootPath      string
 	Routes        *chi.Mux
 	Render        *render.Render
@@ -91,7 +92,7 @@ func New(rootPath string) (*Atlas, error) {
 	if dbConfig.database != "" {
 		db, err := a.OpenDB(dbConfig.database, dbConfig.dsn)
 		if err != nil {
-			a.ErrorLog.Println(err)
+			a.ErrorLog.Error("Cannot connect to database: ", "error", err)
 			os.Exit(1)
 		}
 
@@ -183,7 +184,7 @@ func New(rootPath string) (*Atlas, error) {
 func (a *Atlas) ListenAndServe() {
 	server := &http.Server{
 		Addr:         fmt.Sprintf(":%s", a.config.port),
-		ErrorLog:     a.ErrorLog,
+		ErrorLog:     slog.NewLogLogger(a.ErrorLog.Handler(), slog.LevelError),
 		Handler:      a.Routes,
 		IdleTimeout:  30 * time.Second,
 		ReadTimeout:  5 * time.Second,
@@ -197,10 +198,13 @@ func (a *Atlas) ListenAndServe() {
 		defer redisPool.Close()
 	}
 
-	a.InfoLog.Printf("Starting server on port %s", a.config.port)
+	a.InfoLog.Info("Starting server", "port", a.config.port)
 
 	err := server.ListenAndServe()
-	a.ErrorLog.Fatal(err)
+	if err != nil {
+		a.ErrorLog.Error("Error starting server", "error", err)
+		os.Exit(1)
+	}
 }
 
 func (a *Atlas) init(p initPath) error {
@@ -221,12 +225,20 @@ func (a *Atlas) init(p initPath) error {
 	return nil
 }
 
-func (a *Atlas) startLoggers() (*log.Logger, *log.Logger) {
-	var infoLog *log.Logger
-	var errorLog *log.Logger
+func (a *Atlas) startLoggers() (*slog.Logger, *slog.Logger) {
+	var infoLog *slog.Logger
+	var errorLog *slog.Logger
 
-	infoLog = log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
-	errorLog = log.New(os.Stdout, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
+	infoHandler := slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	})
+	errorHandler := slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level:     slog.LevelError,
+		AddSource: true,
+	})
+
+	infoLog = slog.New(infoHandler)
+	errorLog = slog.New(errorHandler)
 
 	return infoLog, errorLog
 }
@@ -261,7 +273,8 @@ func (a *Atlas) BuildDSN() string {
 			dsn = fmt.Sprintf("%s password=%s", dsn, os.Getenv("DATABASE_PASS"))
 		}
 	default:
-		a.ErrorLog.Println("could not create DB  DSN")
+		a.ErrorLog.Error("Database type not supported")
+		os.Exit(1)
 	}
 
 	return dsn

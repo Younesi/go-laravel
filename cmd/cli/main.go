@@ -10,7 +10,7 @@ import (
 
 var at atlas.Atlas
 
-const version = "1.0.0"
+const version = "0.0.1"
 
 func main() {
 	var message string

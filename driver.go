@@ -23,6 +23,6 @@ func (a *Atlas) OpenDB(dbType, dsn string) (*sql.DB, error) {
 		return nil, err
 	}
 
-	a.InfoLog.Println("connected to DB : ", dbType)
+	a.InfoLog.Info("connected to DB", "type", dbType)
 	return db, nil
 }
